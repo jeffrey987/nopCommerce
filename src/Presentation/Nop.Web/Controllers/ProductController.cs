@@ -24,8 +24,8 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
-using Nop.Web.Framework.Security.Captcha;
 using Nop.Web.Models.Catalog;
+
 
 namespace Nop.Web.Controllers
 {
@@ -54,6 +54,7 @@ namespace Nop.Web.Controllers
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly LocalizationSettings _localizationSettings;
         private readonly ShoppingCartSettings _shoppingCartSettings;
+      
 
         #endregion
 
@@ -79,7 +80,8 @@ namespace Nop.Web.Controllers
             IWorkContext workContext,
             IWorkflowMessageService workflowMessageService,
             LocalizationSettings localizationSettings,
-            ShoppingCartSettings shoppingCartSettings)
+            ShoppingCartSettings shoppingCartSettings
+           )
         {
             _captchaSettings = captchaSettings;
             _catalogSettings = catalogSettings;
@@ -102,6 +104,7 @@ namespace Nop.Web.Controllers
             _workflowMessageService = workflowMessageService;
             _localizationSettings = localizationSettings;
             _shoppingCartSettings = shoppingCartSettings;
+       
         }
 
         #endregion
@@ -265,6 +268,26 @@ namespace Nop.Web.Controllers
             return new RssActionResult(feed, _webHelper.GetThisPageUrl(false));
         }
 
+   
+        public virtual IActionResult GetJson()
+        {
+            IPagedList<Product> products = null;
+           
+            products = _productService.SearchProducts(
+                  storeId: _storeContext.CurrentStore.Id,
+                  visibleIndividuallyOnly: true,
+                  markedAsNewOnly: true,
+                  orderBy: ProductSortingEnum.CreatedOn,
+                  pageSize:20);
+            var products2 = new List<ProductOverviewModel>();
+            products2.AddRange(_productModelFactory.PrepareProductOverviewModels(products));
+
+            foreach (var item2 in products2)
+            {
+                item2.Url = string.Format("http://{0}{1}", Request.Host,Url.RouteUrl("Product", new { SeName = item2.SeName }));
+            }      
+            return new JsonResult(products2);
+        }
         #endregion
 
         #region Product reviews
